@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const transporter = require("../config/mailer");
+const sendOTP = require("../config/mailer");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
 
@@ -15,14 +15,12 @@ exports.registerUser = async (req, res) => {
     if (existingUser)
       return res.status(400).json({ message: "User already exists" });
 
-    // generate 6 digit OTP
     const otp = otpGenerator.generate(6, {
       upperCaseAlphabets: false,
       specialChars: false,
       alphabets: false,
     });
 
-    // create unverified user
     const user = await User.create({
       name,
       username,
@@ -30,27 +28,17 @@ exports.registerUser = async (req, res) => {
       phone,
       password,
       otp,
-      otpExpires: Date.now() + 5 * 60 * 1000, // 5 minutes
+      otpExpires: Date.now() + 5 * 60 * 1000,
     });
 
-    // send email
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Mocmed Account Verification",
-      html: `
-        <h2>Verify Your Mocmed Account</h2>
-        <p>Your OTP is:</p>
-        <h1>${otp}</h1>
-        <p>This OTP expires in 5 minutes</p>
-      `,
-    });
+    await sendOTP(email, otp);
 
     res.status(200).json({
       message: "OTP sent to your email",
       userId: user._id,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -61,7 +49,6 @@ exports.verifyOtp = async (req, res) => {
     const { userId, otp } = req.body;
 
     const user = await User.findById(userId);
-
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (user.otp !== otp || user.otpExpires < Date.now())
@@ -90,21 +77,17 @@ exports.loginUser = async (req, res) => {
 
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-    // 🔴 BLOCK LOGIN IF NOT VERIFIED
     if (!user.isVerified)
-      return res
-        .status(401)
-        .json({ message: "Please verify your email first" });
+      return res.status(401).json({ message: "Please verify your email first" });
 
     const isMatch = await user.matchPassword(password);
-
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" },
+      { expiresIn: "7d" }
     );
 
     res.json({
@@ -118,25 +101,12 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// ================= GET PATIENTS =================
-exports.getPatients = async (req, res) => {
-  try {
-    const patients = await User.find({ role: "USER" }).select(
-      "_id name email phone",
-    );
-
-    res.json(patients);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
+// ================= FORGOT PASSWORD =================
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
     const user = await User.findOne({ email });
-
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const otp = otpGenerator.generate(6, {
@@ -146,69 +116,13 @@ exports.forgotPassword = async (req, res) => {
       specialChars: false,
     });
 
-    await User.updateOne(
-      { _id: user._id },
-      {
-        resetOtp: String(otp),
-        resetOtpExpires: Date.now() + 5 * 60 * 1000,
-      },
-    );
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Reset your Mocmed password",
-      html: `<h2>Password Reset OTP</h2><h1>${otp}</h1><p>Valid for 5 minutes</p>`,
-    });
-
-    res.json({ message: "Reset OTP sent", userId: user._id });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-exports.verifyResetOtp = async (req, res) => {
-  try {
-    const { userId, otp } = req.body;
-
-    const user = await User.findById(userId);
-
-    if (!user || !user.resetOtp || !user.resetOtpExpires) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
-
-    // check otp
-    if (user.resetOtp !== String(otp)) {
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    // check expiry properly
-    const now = new Date();
-    if (user.resetOtpExpires.getTime() < now.getTime()) {
-      return res.status(400).json({ message: "OTP expired" });
-    }
-
-    res.json({ message: "OTP verified" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-exports.resetPassword = async (req, res) => {
-  try {
-    const { userId, password } = req.body;
-
-    const user = await User.findById(userId);
-
-    user.password = password;
+    user.resetOtp = otp;
+    user.resetOtpExpires = Date.now() + 5 * 60 * 1000;
     await user.save();
 
-    await User.updateOne(
-      { _id: user._id },
-      { $unset: { resetOtp: "", resetOtpExpires: "" } },
-    );
+    await sendOTP(email, otp);
 
-    res.json({ message: "Password reset successful" });
+    res.json({ message: "Reset OTP sent", userId: user._id });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
