@@ -11,11 +11,15 @@ exports.uploadReport = async (req, res) => {
       return res.status(404).json({ message: "Patient not found" });
     }
 
+    if (!req.file) {
+      return res.status(400).json({ message: "File missing" });
+    }
+
     const report = await Report.create({
       patient: patientId,
       reportName,
       reportType,
-      fileUrl: req.file.path,
+      fileUrl: req.file.path, // Cloudinary URL
       uploadedBy: req.user._id,
     });
 
@@ -48,11 +52,9 @@ exports.downloadReport = async (req, res) => {
   try {
     const report = await Report.findById(req.params.reportId);
 
-    if (!report) {
+    if (!report)
       return res.status(404).json({ message: "Report not found" });
-    }
 
-    // user can download only his report OR admin
     if (
       report.patient.toString() !== req.user._id.toString() &&
       req.user.role !== "SUPERADMIN"
@@ -60,13 +62,9 @@ exports.downloadReport = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    const filePath = path.resolve(report.fileUrl);
+    // redirect to cloudinary file
+    return res.redirect(report.fileUrl);
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: "File missing on server" });
-    }
-
-    res.download(filePath);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -78,7 +76,6 @@ exports.viewReport = async (req, res) => {
     if (!report)
       return res.status(404).json({ message: "Report not found" });
 
-    // allow owner or admin
     if (
       report.patient.toString() !== req.user._id.toString() &&
       req.user.role !== "SUPERADMIN"
@@ -86,13 +83,8 @@ exports.viewReport = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    const filePath = path.resolve(report.fileUrl);
-
-    if (!fs.existsSync(filePath))
-      return res.status(404).json({ message: "File missing" });
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.sendFile(filePath);
+    // open PDF in browser
+    return res.redirect(report.fileUrl);
 
   } catch (error) {
     res.status(500).json({ message: error.message });
