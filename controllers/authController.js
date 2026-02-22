@@ -1,11 +1,37 @@
-// Language: Node.js (JavaScript)
-
 const User = require("../models/User");
-const transporter = require("../config/mailer");
 const otpGenerator = require("otp-generator");
 const jwt = require("jsonwebtoken");
+const axios = require("axios");
 
-// ================= REGISTER (SEND OTP) =================
+// ⭐ Reusable Email Sender (BREVO API)
+const sendEmail = async (to, subject, html) => {
+  try {
+    await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: {
+          name: "Mocmed Diagnostics",
+          email: process.env.EMAIL_USER,
+        },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Email sent successfully");
+  } catch (err) {
+    console.log("Email error:", err.message);
+  }
+};
+
+// ================= REGISTER =================
 exports.registerUser = async (req, res) => {
   try {
     const { name, username, email, phone, password } = req.body;
@@ -33,23 +59,17 @@ exports.registerUser = async (req, res) => {
       otpExpires: Date.now() + 5 * 60 * 1000,
     });
 
-    // ⭐ FIXED — NON BLOCKING EMAIL (NO AWAIT)
-    transporter
-      .sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "Mocmed Account Verification",
-        html: `
-          <h2>Verify Your Mocmed Account</h2>
-          <p>Your OTP is:</p>
-          <h1>${otp}</h1>
-          <p>This OTP expires in 5 minutes</p>
-        `,
-      })
-      .then(() => console.log("Register OTP email sent"))
-      .catch((err) => console.log("Email error:", err.message));
+    // ⭐ SEND EMAIL (NON BLOCKING)
+    sendEmail(
+      email,
+      "Mocmed Account Verification",
+      `
+        <h2>Verify Your Mocmed Account</h2>
+        <h1>${otp}</h1>
+        <p>This OTP expires in 5 minutes</p>
+      `
+    );
 
-    // ⭐ Respond immediately (prevents timeout)
     res.status(200).json({
       message: "OTP sent to your email",
       userId: user._id,
@@ -160,43 +180,15 @@ exports.forgotPassword = async (req, res) => {
       }
     );
 
-    // ⭐ FIXED — NON BLOCKING EMAIL
-    transporter
-      .sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "Reset your Mocmed password",
-        html: `<h2>Password Reset OTP</h2><h1>${otp}</h1><p>Valid for 5 minutes</p>`,
-      })
-      .then(() => console.log("Reset OTP email sent"))
-      .catch((err) => console.log("Email error:", err.message));
+    sendEmail(
+      email,
+      "Reset your Mocmed password",
+      `<h2>Password Reset OTP</h2><h1>${otp}</h1><p>Valid for 5 minutes</p>`
+    );
 
     res.json({ message: "Reset OTP sent", userId: user._id });
   } catch (error) {
     console.log("FORGOT PASSWORD ERROR:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// ================= VERIFY RESET OTP =================
-exports.verifyResetOtp = async (req, res) => {
-  try {
-    const { userId, otp } = req.body;
-
-    const user = await User.findById(userId);
-
-    if (!user || !user.resetOtp || !user.resetOtpExpires)
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-
-    if (user.resetOtp !== String(otp))
-      return res.status(400).json({ message: "Invalid OTP" });
-
-    const now = new Date();
-    if (user.resetOtpExpires.getTime() < now.getTime())
-      return res.status(400).json({ message: "OTP expired" });
-
-    res.json({ message: "OTP verified" });
-  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
