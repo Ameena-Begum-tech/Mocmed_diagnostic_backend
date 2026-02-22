@@ -2,6 +2,10 @@
 // Language: Node.js (JavaScript)
 
 const nodemailer = require("nodemailer");
+const dns = require("dns");
+
+// ⭐ Force Node to prefer IPv4
+dns.setDefaultResultOrder("ipv4first");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -11,15 +15,15 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  tls: {
-    family: 4,
-  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 });
 
-// ⭐ ADD THIS BLOCK RIGHT HERE
+// ⭐ Debug SMTP connection
 transporter.verify((error, success) => {
   if (error) {
-    console.log("SMTP ERROR:", error);
+    console.log("SMTP ERROR:", error.message);
   } else {
     console.log("SMTP READY");
   }
