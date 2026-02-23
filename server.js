@@ -10,7 +10,17 @@ connectDB();
 const app = express();
 
 // Middlewares
-app.use(cors());
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://mocmed-diagnostic-frontend.vercel.app",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
