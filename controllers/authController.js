@@ -213,3 +213,30 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// ================= VERIFY RESET OTP =================
+exports.verifyResetOtp = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user || !user.resetOtp || !user.resetOtpExpires)
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+
+    // check OTP
+    if (user.resetOtp !== String(otp))
+      return res.status(400).json({ message: "Invalid OTP" });
+
+    // check expiry
+    if (user.resetOtpExpires < Date.now())
+      return res.status(400).json({ message: "OTP expired" });
+
+    // ⭐ mark verified temporarily
+    user.resetOtpVerified = true;
+    await user.save();
+
+    res.json({ message: "OTP verified successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
