@@ -4,9 +4,10 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 
 // ⭐ Reusable Email Sender (BREVO API)
+// BREVO API EMAIL SENDER (FIXED DEBUG VERSION)
 const sendEmail = async (to, subject, html) => {
   try {
-    await axios.post(
+    const response = await axios.post(
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
@@ -21,13 +22,14 @@ const sendEmail = async (to, subject, html) => {
         headers: {
           "api-key": process.env.BREVO_API_KEY,
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
       }
     );
 
-    console.log("Email sent successfully");
+    console.log("BREVO RESPONSE:", response.data);
   } catch (err) {
-    console.log("Email error:", err.message);
+    console.log("BREVO FULL ERROR:", err.response?.data || err.message);
   }
 };
 
