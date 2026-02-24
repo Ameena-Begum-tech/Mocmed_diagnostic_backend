@@ -47,6 +47,8 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
 
     const otp = otpGenerator.generate(6, {
+      digits: true,
+      lowerCaseAlphabets: false,
       upperCaseAlphabets: false,
       specialChars: false,
       alphabets: false,
@@ -240,6 +242,69 @@ exports.verifyResetOtp = async (req, res) => {
 
     res.json({ message: "OTP verified successfully" });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ================= RESEND VERIFY OTP =================
+exports.resendVerifyOtp = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // ❌ block if already verified
+    if (user.isVerified) {
+      return res.status(400).json({ message: "User already verified" });
+    }
+
+    // ✅ 30 sec cooldown
+    if (
+      user.lastOtpSentAt &&
+      Date.now() - user.lastOtpSentAt.getTime() < 30000
+    ) {
+      return res.status(429).json({
+        message: "Please wait 30 seconds before requesting again",
+      });
+    }
+
+    // ✅ max resend limit
+    if (user.resendOtpCount >= 5) {
+      return res.status(429).json({
+        message: "Maximum OTP resend limit reached",
+      });
+    }
+
+    // 🔐 generate new otp
+    const otp = otpGenerator.generate(6, {
+       digits: true,
+      upperCaseAlphabets: false,
+      lowerCaseAlphabets: false,
+      specialChars: false,
+      alphabets: false,
+    });
+
+    user.otp = otp;
+    user.otpExpires = Date.now() + 5 * 60 * 1000;
+    user.resendOtpCount += 1;
+    user.lastOtpSentAt = new Date();
+
+    await user.save();
+
+    // ⭐ send mail using existing function
+    sendEmail(
+      user.email,
+      "Mocmed Account Verification (Resent)",
+      `<h2>Your new OTP</h2><h1>${otp}</h1>`
+    );
+
+    res.json({ message: "OTP resent successfully" });
+  } catch (error) {
+    console.log("RESEND OTP ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
