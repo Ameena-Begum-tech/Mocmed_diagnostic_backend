@@ -51,11 +51,27 @@ const userSchema = new mongoose.Schema(
     otp: String,
     otpExpires: Date,
 
-    // 🔑 RESET PASSWORD OTP  ⭐ ADD THIS
+    // ✅ NEW — RESEND OTP CONTROL (STEP-1 ADDITION)
+    resendOtpCount: {
+      type: Number,
+      default: 0,
+    },
+
+    lastOtpSentAt: {
+      type: Date,
+    },
+
+    // 🔑 RESET PASSWORD OTP
     resetOtp: String,
     resetOtpExpires: Date,
+
+    // ⭐ OPTIONAL BUT SECURE (needed later)
+    resetOtpVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 // HASH PASSWORD
