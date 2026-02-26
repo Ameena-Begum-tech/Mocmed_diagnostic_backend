@@ -325,3 +325,18 @@ exports.getMe = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+exports.updateProfile = async (req, res) => {
+  const { phone, age, gender } = req.body;
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  user.phone = phone || user.phone;
+  user.age = age || user.age;
+  user.gender = gender || user.gender;
+
+  await user.save();
+
+  res.json(user);
+};
