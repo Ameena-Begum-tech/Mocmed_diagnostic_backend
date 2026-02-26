@@ -18,6 +18,23 @@ const reportSchema = new mongoose.Schema(
       required: true,
     },
 
+    // NEW FIELDS
+    name: {
+      type: String,
+      required: true,
+    },
+
+    age: {
+      type: Number,
+      required: true,
+    },
+
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      required: true,
+    },
+
     fileUrl: {
       type: String,
       required: true,
