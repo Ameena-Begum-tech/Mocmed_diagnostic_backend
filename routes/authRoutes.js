@@ -14,10 +14,12 @@ const {
 
 const { protect, authorize } = require("../middleware/authMiddleWare");
 const { viewReport } = require("../controllers/reportController");
+const { getMe } = require("../controllers/authController");
 const { resendVerifyOtp } = require("../controllers/authController");
 
 // Routes
 router.post("/register", registerUser);
+router.get("/me", protect, getMe);
 router.post("/login", loginUser);
 router.post("/verify-otp", verifyOtp);
 router.post("/forgot-password", forgotPassword);
