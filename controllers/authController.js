@@ -46,7 +46,7 @@ exports.registerUser = async (req, res) => {
     if (existingUser)
       return res.status(400).json({ message: "User already exists" });
 
-    const otp = otpGenerator.generate(6, {
+    const otp = otpGenerator.generate(4, {
       digits: true,
       lowerCaseAlphabets: false,
       upperCaseAlphabets: false,
@@ -170,7 +170,7 @@ exports.forgotPassword = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const otp = otpGenerator.generate(6, {
+    const otp = otpGenerator.generate(4, {
       digits: true,
       lowerCaseAlphabets: false,
       upperCaseAlphabets: false,
@@ -280,7 +280,7 @@ exports.resendVerifyOtp = async (req, res) => {
     }
 
     // 🔐 generate new otp
-    const otp = otpGenerator.generate(6, {
+    const otp = otpGenerator.generate(4, {
        digits: true,
       upperCaseAlphabets: false,
       lowerCaseAlphabets: false,
