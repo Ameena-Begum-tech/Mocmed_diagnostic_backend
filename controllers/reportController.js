@@ -37,6 +37,7 @@ exports.getMyReports = async (req, res) => {
   try {
     const reports = await Report.find({ patient: req.user._id })
       .populate("uploadedBy", "name role")
+      .populate("patient", "name username email phone")
       .sort({ createdAt: -1 });
 
     res.json(reports);
