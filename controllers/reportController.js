@@ -4,7 +4,14 @@ const User = require("../models/User");
 // SUPERADMIN uploads report
 exports.uploadReport = async (req, res) => {
   try {
-    const { patientId, reportName, reportType } = req.body;
+    const {
+      patientId,
+      reportName,
+      reportType,
+      name,
+      age,
+      gender,
+    } = req.body;
 
     const patient = await User.findById(patientId);
     if (!patient) {
@@ -17,9 +24,12 @@ exports.uploadReport = async (req, res) => {
 
     const report = await Report.create({
       patient: patientId,
+      name,
+      age,
+      gender,
       reportName,
       reportType,
-      fileUrl: req.file.path, // Cloudinary URL
+      fileUrl: req.file.path,
       uploadedBy: req.user._id,
     });
 
