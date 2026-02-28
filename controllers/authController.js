@@ -326,17 +326,32 @@ exports.getMe = async (req, res) => {
   }
 };
 exports.updateProfile = async (req, res) => {
-  const { phone, age, gender } = req.body;
+  try {
+    const { phone, age, gender } = req.body;
 
-  const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id);
 
-  if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-  user.phone = phone || user.phone;
-  user.age = age || user.age;
-  user.gender = gender || user.gender;
+    // Update only if provided
+    if (phone !== undefined) {
+      user.phone = phone;
+    }
 
-  await user.save();
+    if (age !== undefined && age !== "") {
+      user.age = Number(age);
+    }
 
-  res.json(user);
+    if (gender !== undefined && gender !== "") {
+      user.gender = gender;
+    }
+
+    await user.save();
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
