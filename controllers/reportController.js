@@ -26,11 +26,17 @@ exports.uploadReport = async (req, res) => {
       return res.status(404).json({ message: "Patient not found" });
     }
 
-    // ✅ VERY IMPORTANT — update User collection
-    patient.age = Number(age);
-    patient.gender = gender;
-    await patient.save();
+    // 🔥 UPDATE USER COLLECTION (THIS IS WHAT YOU ARE MISSING)
+    await User.findByIdAndUpdate(
+      patientId,
+      {
+        age: Number(age),
+        gender: gender,
+      },
+      { new: true }
+    );
 
+    // Save Report
     const report = await Report.create({
       patient: patientId,
       name: patient.name,
@@ -41,6 +47,17 @@ exports.uploadReport = async (req, res) => {
       fileUrl: req.file.path,
       uploadedBy: req.user._id,
     });
+
+    res.status(201).json({
+      message: "Report uploaded successfully",
+      report,
+    });
+
+  } catch (error) {
+    console.log("UPLOAD ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
 
     res.status(201).json({
       message: "Report uploaded successfully",
