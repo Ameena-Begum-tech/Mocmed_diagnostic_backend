@@ -23,6 +23,13 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    age: {
+  type: Number,
+},
+
+gender: {
+  type: String,
+},
 
     phone: {
       type: String,
