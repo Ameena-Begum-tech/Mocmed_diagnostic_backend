@@ -2,15 +2,14 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
-const { protect } = require("./middleware/authMiddleWare");
-const { authorize } = require("./middleware/authMiddleWare");
+const { protect, authorize } = require("./middleware/authMiddleWare");
+
 dotenv.config();
 connectDB();
 
 const app = express();
 
-// Middlewares
-
+// ================= MIDDLEWARES =================
 
 app.use(
   cors({
@@ -21,11 +20,17 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
+
+// ================= ROUTES =================
+
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
+app.use("/api/documents", require("./routes/documentRoutes")); // ⭐ ADDED
 
-// Test route
+// ================= TEST ROUTES =================
+
 app.get("/", (req, res) => {
   res.send("Mocmed Backend Running...");
 });
@@ -43,6 +48,8 @@ app.get("/api/admin-only", protect, authorize("SUPERADMIN"), (req, res) => {
     user: req.user,
   });
 });
+
+// ================= SERVER =================
 
 const PORT = process.env.PORT || 5000;
 
