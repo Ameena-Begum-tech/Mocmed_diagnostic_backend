@@ -4,14 +4,7 @@ const User = require("../models/User");
 // SUPERADMIN uploads report
 exports.uploadReport = async (req, res) => {
   try {
-    const {
-      patientId,
-      reportName,
-      reportType,
-      name,
-      age,
-      gender,
-    } = req.body;
+    const { patientId, reportName, reportType, age, gender } = req.body;
 
     const patient = await User.findById(patientId);
     if (!patient) {
@@ -22,9 +15,14 @@ exports.uploadReport = async (req, res) => {
       return res.status(400).json({ message: "File missing" });
     }
 
+    // ✅ UPDATE USER AGE & GENDER
+    patient.age = age;
+    patient.gender = gender;
+    await patient.save();
+
     const report = await Report.create({
       patient: patientId,
-      name,
+      name: patient.name,
       age,
       gender,
       reportName,
