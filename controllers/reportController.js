@@ -1,20 +1,10 @@
 const Report = require("../models/Report");
 const User = require("../models/User");
 
-// SUPERADMIN uploads report
-const Report = require("../models/Report");
-const User = require("../models/User");
-
 // ================= UPLOAD REPORT =================
 exports.uploadReport = async (req, res) => {
   try {
-    const {
-      patientId,
-      reportName,
-      reportType,
-      age,
-      gender,
-    } = req.body;
+    const { patientId, reportName, reportType, age, gender } = req.body;
 
     if (!patientId) {
       return res.status(400).json({ message: "Patient required" });
@@ -30,7 +20,7 @@ exports.uploadReport = async (req, res) => {
       return res.status(404).json({ message: "Patient not found" });
     }
 
-    // 🔥 UPDATE USER COLLECTION (THIS IS WHAT YOU ARE MISSING)
+    // 🔥 Update USER collection with age & gender
     await User.findByIdAndUpdate(
       patientId,
       {
@@ -45,7 +35,7 @@ exports.uploadReport = async (req, res) => {
       patient: patientId,
       name: patient.name,
       age: Number(age),
-      gender,
+      gender: gender,
       reportName,
       reportType,
       fileUrl: req.file.path,
@@ -58,16 +48,15 @@ exports.uploadReport = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("UPLOAD ERROR:", error);
+    console.error("UPLOAD ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
-// USER gets his own reports
+
+// ================= GET MY REPORTS =================
 exports.getMyReports = async (req, res) => {
   try {
     const reports = await Report.find({ patient: req.user._id })
-      .populate("uploadedBy", "name role")
-      .populate("patient", "name username email phone")
       .sort({ createdAt: -1 });
 
     res.json(reports);
@@ -75,10 +64,8 @@ exports.getMyReports = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-const path = require("path");
-const fs = require("fs");
 
-// SECURE DOWNLOAD REPORT
+// ================= DOWNLOAD REPORT =================
 exports.downloadReport = async (req, res) => {
   try {
     const report = await Report.findById(req.params.reportId);
@@ -93,13 +80,14 @@ exports.downloadReport = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    // redirect to cloudinary file
     return res.redirect(report.fileUrl);
 
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+// ================= VIEW REPORT =================
 exports.viewReport = async (req, res) => {
   try {
     const report = await Report.findById(req.params.reportId);
@@ -114,7 +102,6 @@ exports.viewReport = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    // open PDF in browser
     return res.redirect(report.fileUrl);
 
   } catch (error) {
