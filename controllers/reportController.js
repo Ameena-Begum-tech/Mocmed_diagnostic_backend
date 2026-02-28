@@ -4,26 +4,37 @@ const User = require("../models/User");
 // SUPERADMIN uploads report
 exports.uploadReport = async (req, res) => {
   try {
-    const { patientId, reportName, reportType, age, gender } = req.body;
+    const {
+      patientId,
+      reportName,
+      reportType,
+      age,
+      gender,
+    } = req.body;
 
-    const patient = await User.findById(patientId);
-    if (!patient) {
-      return res.status(404).json({ message: "Patient not found" });
+    if (!patientId) {
+      return res.status(400).json({ message: "Patient required" });
     }
 
     if (!req.file) {
       return res.status(400).json({ message: "File missing" });
     }
 
-    // ✅ UPDATE USER AGE & GENDER
-    patient.age = age;
+    const patient = await User.findById(patientId);
+
+    if (!patient) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+
+    // ✅ VERY IMPORTANT — update User collection
+    patient.age = Number(age);
     patient.gender = gender;
     await patient.save();
 
     const report = await Report.create({
       patient: patientId,
       name: patient.name,
-      age,
+      age: Number(age),
       gender,
       reportName,
       reportType,
@@ -35,7 +46,9 @@ exports.uploadReport = async (req, res) => {
       message: "Report uploaded successfully",
       report,
     });
+
   } catch (error) {
+    console.log("UPLOAD ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
