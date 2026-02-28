@@ -2,6 +2,10 @@ const Report = require("../models/Report");
 const User = require("../models/User");
 
 // SUPERADMIN uploads report
+const Report = require("../models/Report");
+const User = require("../models/User");
+
+// ================= UPLOAD REPORT =================
 exports.uploadReport = async (req, res) => {
   try {
     const {
@@ -26,7 +30,7 @@ exports.uploadReport = async (req, res) => {
       return res.status(404).json({ message: "Patient not found" });
     }
 
-    // 🔥 UPDATE USER COLLECTION (THIS IS WHAT YOU ARE MISSING)
+    // 🔥 Update USER collection
     await User.findByIdAndUpdate(
       patientId,
       {
@@ -36,12 +40,12 @@ exports.uploadReport = async (req, res) => {
       { new: true }
     );
 
-    // Save Report
+    // Save report
     const report = await Report.create({
       patient: patientId,
       name: patient.name,
       age: Number(age),
-      gender,
+      gender: gender,
       reportName,
       reportType,
       fileUrl: req.file.path,
@@ -54,22 +58,10 @@ exports.uploadReport = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("UPLOAD ERROR:", error);
+    console.error("UPLOAD ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
-    res.status(201).json({
-      message: "Report uploaded successfully",
-      report,
-    });
-
-  } catch (error) {
-    console.log("UPLOAD ERROR:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
 // USER gets his own reports
 exports.getMyReports = async (req, res) => {
   try {
