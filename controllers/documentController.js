@@ -1,3 +1,5 @@
+// controllers/documentController.js
+
 const Document = require("../models/Document");
 
 // ================= UPLOAD DOCUMENT =================
@@ -46,8 +48,15 @@ exports.uploadDocument = async (req, res) => {
       document,
     });
 
+  } catch (error) {
+    console.error("DOCUMENT UPLOAD ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
 
-    exports.getPatientDocuments = async (req, res) => {
+
+// ================= GET ALL PATIENT DOCUMENTS (DOCTOR) =================
+exports.getPatientDocuments = async (req, res) => {
   try {
     const documents = await Document.find()
       .populate("user", "name email phone")
@@ -59,8 +68,13 @@ exports.uploadDocument = async (req, res) => {
   }
 };
 
+
+// ================= DELETE DOCUMENT (DOCTOR) =================
+exports.deleteDocument = async (req, res) => {
+  try {
+    await Document.findByIdAndDelete(req.params.id);
+    res.json({ message: "Document deleted successfully" });
   } catch (error) {
-    console.error("DOCUMENT UPLOAD ERROR:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Delete failed" });
   }
 };
