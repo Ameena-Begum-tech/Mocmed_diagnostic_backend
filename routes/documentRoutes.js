@@ -13,6 +13,22 @@ router.get(
   getPatientDocuments
 );
 
+router.delete(
+  "/:id",
+  protect,
+  authorize("SUPERADMIN"),
+  async (req, res) => {
+    const Document = require("../models/Document");
+
+    try {
+      await Document.findByIdAndDelete(req.params.id);
+      res.json({ message: "Document deleted" });
+    } catch {
+      res.status(500).json({ message: "Delete failed" });
+    }
+  }
+);
+
 router.post(
   "/upload",
   protect,
