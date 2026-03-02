@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const upload = require("../config/multer");
-const { uploadReport, getMyReports, downloadReport } = require("../controllers/reportController");
+const { uploadReport, getMyReports, downloadReport,deleteReport } = require("../controllers/reportController");
 const { protect, authorize } = require("../middleware/authMiddleWare");
 const { viewReport } = require("../controllers/reportController");
 const { getPatientUploads } = require("../controllers/reportController");
