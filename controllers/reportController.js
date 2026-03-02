@@ -53,6 +53,11 @@ exports.uploadReport = async (req, res) => {
   }
 };
 
+exports.deleteReport = async (req, res) => {
+  await Report.findByIdAndDelete(req.params.id);
+  res.json({ message: "Report deleted" });
+};
+
 // ================= GET MY REPORTS =================
 exports.getMyReports = async (req, res) => {
   try {
