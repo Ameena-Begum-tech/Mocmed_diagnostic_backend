@@ -8,12 +8,7 @@ const { viewReport } = require("../controllers/reportController");
 const { getPatientUploads } = require("../controllers/reportController");
 
 // ⭐ Doctor only route
-router.get(
-  "/patient-uploads",
-  protect,
-  authorize("SUPERADMIN"),
-  getPatientUploads
-);
+
 router.delete(
   "/:id",
   protect,
