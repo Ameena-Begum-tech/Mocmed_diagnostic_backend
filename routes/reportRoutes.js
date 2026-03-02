@@ -5,6 +5,15 @@ const upload = require("../config/multer");
 const { uploadReport, getMyReports, downloadReport } = require("../controllers/reportController");
 const { protect, authorize } = require("../middleware/authMiddleWare");
 const { viewReport } = require("../controllers/reportController");
+const { getPatientUploads } = require("../controllers/reportController");
+
+// ⭐ Doctor only route
+router.get(
+  "/patient-uploads",
+  protect,
+  authorize("SUPERADMIN"),
+  getPatientUploads
+);
 
 router.post("/upload", protect, authorize("SUPERADMIN"), upload.single("report"), uploadReport);
 
