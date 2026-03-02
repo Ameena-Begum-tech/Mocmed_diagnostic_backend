@@ -65,6 +65,20 @@ exports.getMyReports = async (req, res) => {
   }
 };
 
+// ================= GET PATIENT UPLOADS (Doctor Only) =================
+exports.getPatientUploads = async (req, res) => {
+  try {
+    const reports = await Report.find({ uploadedBy: "USER" })
+      .populate("patient", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json(reports);
+  } catch (error) {
+    console.log("GET PATIENT UPLOADS ERROR:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // ================= DOWNLOAD REPORT =================
 exports.downloadReport = async (req, res) => {
   try {
