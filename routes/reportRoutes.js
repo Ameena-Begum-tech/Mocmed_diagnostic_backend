@@ -14,6 +14,12 @@ router.get(
   authorize("SUPERADMIN"),
   getPatientUploads
 );
+router.delete(
+  "/:id",
+  protect,
+  authorize("SUPERADMIN"),
+  deleteReport
+);
 
 router.post("/upload", protect, authorize("SUPERADMIN"), upload.single("report"), uploadReport);
 
