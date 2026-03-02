@@ -27,7 +27,8 @@ app.use(express.json());
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
-app.use("/api/documents", require("./routes/documentRoutes")); // ⭐ ADDED
+app.use("/api/documents", require("./routes/documentRoutes")); 
+// ⭐ ADDED
 
 // ================= TEST ROUTES =================
 
