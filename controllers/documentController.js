@@ -46,6 +46,19 @@ exports.uploadDocument = async (req, res) => {
       document,
     });
 
+
+    exports.getPatientDocuments = async (req, res) => {
+  try {
+    const documents = await Document.find()
+      .populate("user", "name email phone")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(documents);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch documents" });
+  }
+};
+
   } catch (error) {
     console.error("DOCUMENT UPLOAD ERROR:", error);
     res.status(500).json({ message: error.message });
